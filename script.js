@@ -13,10 +13,37 @@ const WORDS = [
   "information","back","parent","face","others","level","office","door","health","person","art"
 ];
 
+const LEVELS = {
+  homeRow: { label: "Home Row", keys: "asdfjkl;" },
+  topRow: { label: "Top Row", keys: "asdfjkl;qwertyuiop" },
+  bottomRow: { label: "Bottom Row", keys: "asdfjkl;zxcvbnm," },
+  allLetters: { label: "All Letters", keys: "abcdefghijklmnopqrstuvwxyz" },
+  numbers: { label: "Numbers", keys: "0123456789" },
+  words: { label: "Words", keys: null },
+};
+
+let currentLevel = "homeRow";
+
+function randomPseudoWord(keys) {
+  const length = 2 + Math.floor(Math.random() * 4);
+  let word = "";
+  for (let i = 0; i < length; i++) {
+    word += keys[Math.floor(Math.random() * keys.length)];
+  }
+  return word;
+}
+
 function generateWords(count) {
+  const level = LEVELS[currentLevel];
   const words = [];
-  for (let i = 0; i < count; i++) {
-    words.push(WORDS[Math.floor(Math.random() * WORDS.length)]);
+  if (level.keys === null) {
+    for (let i = 0; i < count; i++) {
+      words.push(WORDS[Math.floor(Math.random() * WORDS.length)]);
+    }
+  } else {
+    for (let i = 0; i < count; i++) {
+      words.push(randomPseudoWord(level.keys));
+    }
   }
   return words;
 }
@@ -30,6 +57,7 @@ const restartBtn = document.getElementById("restartBtn");
 const playAgainBtn = document.getElementById("playAgainBtn");
 const resultsOverlay = document.getElementById("resultsOverlay");
 const durationBtns = document.querySelectorAll(".duration-btn");
+const levelBtns = document.querySelectorAll(".level-btn");
 
 let duration = 30;
 let timeLeft = duration;
@@ -260,6 +288,15 @@ durationBtns.forEach((btn) => {
     durationBtns.forEach((b) => b.classList.remove("active"));
     btn.classList.add("active");
     duration = parseInt(btn.dataset.time, 10);
+    reset();
+  });
+});
+
+levelBtns.forEach((btn) => {
+  btn.addEventListener("click", () => {
+    levelBtns.forEach((b) => b.classList.remove("active"));
+    btn.classList.add("active");
+    currentLevel = btn.dataset.level;
     reset();
   });
 });

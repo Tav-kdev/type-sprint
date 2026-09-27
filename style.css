@@ -32,7 +32,7 @@ body {
 
 header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   margin-bottom: 32px;
   flex-wrap: wrap;
@@ -45,14 +45,24 @@ h1 {
   margin: 0;
 }
 
+.settings {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.level-group,
 .duration-group {
   display: flex;
   gap: 8px;
   background: var(--surface);
   padding: 6px;
   border-radius: 8px;
+  flex-wrap: wrap;
 }
 
+.level-btn,
 .duration-btn {
   background: transparent;
   border: none;
@@ -62,12 +72,15 @@ h1 {
   cursor: pointer;
   font-size: 0.9rem;
   transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
 }
 
+.level-btn:hover,
 .duration-btn:hover {
   color: var(--text);
 }
 
+.level-btn.active,
 .duration-btn.active {
   background: var(--accent);
   color: var(--bg);
