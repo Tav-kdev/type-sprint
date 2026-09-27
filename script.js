@@ -1,315 +1,340 @@
-const WORDS = [
-  "the","be","to","of","and","a","in","that","have","it","for","not","on","with","he",
-  "as","you","do","at","this","but","his","by","from","they","we","say","her","she","or",
-  "an","will","my","one","all","would","there","their","what","so","up","out","if","about",
-  "who","get","which","go","me","when","make","can","like","time","no","just","him","know",
-  "take","people","into","year","your","good","some","could","them","see","other","than",
-  "then","now","look","only","come","its","over","think","also","back","after","use","two",
-  "how","our","work","first","well","way","even","new","want","because","any","these","give",
-  "day","most","us","world","life","hand","part","child","eye","woman","place","water","room",
-  "area","money","story","fact","month","lot","right","study","book","word","business","issue",
-  "side","kind","head","house","service","friend","father","power","hour","game","line","end",
-  "member","law","car","city","community","name","president","team","minute","idea","body",
-  "information","back","parent","face","others","level","office","door","health","person","art"
-];
+(() => {
+  'use strict';
 
-const LEVELS = {
-  homeRow: { label: "Home Row", keys: "asdfjkl;" },
-  topRow: { label: "Top Row", keys: "asdfjkl;qwertyuiop" },
-  bottomRow: { label: "Bottom Row", keys: "asdfjkl;zxcvbnm," },
-  allLetters: { label: "All Letters", keys: "abcdefghijklmnopqrstuvwxyz" },
-  numbers: { label: "Numbers", keys: "0123456789" },
-  words: { label: "Words", keys: null },
-};
+  // ===== Content pools =====
+  const LETTERS = {
+    homeRow: 'asdfghjkl',
+    topRow: 'qwertyuiop',
+    bottomRow: 'zxcvbnm',
+    allLetters: 'abcdefghijklmnopqrstuvwxyz',
+    numbers: '0123456789'
+  };
 
-let currentLevel = "homeRow";
+  const WORDS = [
+    'space', 'orbit', 'galaxy', 'nebula', 'comet', 'planet', 'stellar', 'cosmic',
+    'rocket', 'lunar', 'solar', 'asteroid', 'meteor', 'void', 'pulse', 'signal',
+    'quantum', 'photon', 'plasma', 'thrust', 'vector', 'module', 'station', 'probe',
+    'launch', 'voyage', 'system', 'engine', 'radar', 'beacon', 'warp', 'fleet',
+    'crew', 'dock', 'hull', 'shield', 'laser', 'nova', 'quasar', 'pulsar',
+    'gravity', 'fusion', 'reactor', 'capsule', 'mission', 'command', 'relay', 'scan',
+    'drift', 'boost', 'ignite', 'navigate', 'deploy', 'transmit', 'receive', 'align',
+    'calibrate', 'trajectory', 'velocity', 'altitude', 'horizon', 'eclipse', 'orbiting',
+    'satellite', 'telescope', 'astronaut', 'spaceship', 'starship', 'hyperspace', 'wormhole'
+  ];
 
-function randomPseudoWord(keys) {
-  const length = 2 + Math.floor(Math.random() * 4);
-  let word = "";
-  for (let i = 0; i < length; i++) {
-    word += keys[Math.floor(Math.random() * keys.length)];
+  // ===== State =====
+  let level = 'homeRow';
+  let duration = 30;
+  let targetText = '';
+  let typed = '';
+  let started = false;
+  let finished = false;
+  let startTime = 0;
+  let timerId = null;
+  let timeLeft = 30;
+  let correctCount = 0;
+  let incorrectCount = 0;
+  let extraCount = 0;
+
+  // ===== DOM =====
+  const textDisplay = document.getElementById('textDisplay');
+  const hiddenInput = document.getElementById('hiddenInput');
+  const timeLeftEl = document.getElementById('timeLeft');
+  const liveWpmEl = document.getElementById('liveWpm');
+  const liveAccEl = document.getElementById('liveAcc');
+  const restartBtn = document.getElementById('restartBtn');
+  const resultsOverlay = document.getElementById('resultsOverlay');
+  const playAgainBtn = document.getElementById('playAgainBtn');
+  const resultWpm = document.getElementById('resultWpm');
+  const resultAcc = document.getElementById('resultAcc');
+  const resultRaw = document.getElementById('resultRaw');
+  const resultChars = document.getElementById('resultChars');
+  const levelBtns = document.querySelectorAll('.level-btn');
+  const durationBtns = document.querySelectorAll('.duration-btn');
+
+  // ===== Helpers =====
+  function randChar(pool) {
+    return pool[Math.floor(Math.random() * pool.length)];
   }
-  return word;
-}
 
-function generateWords(count) {
-  const level = LEVELS[currentLevel];
-  const words = [];
-  if (level.keys === null) {
+  function generateLetters(count) {
+    const pool = LETTERS[level] || LETTERS.homeRow;
+    const chars = [];
     for (let i = 0; i < count; i++) {
-      words.push(WORDS[Math.floor(Math.random() * WORDS.length)]);
+      chars.push(randChar(pool));
+      if ((i + 1) % 5 === 0 && i < count - 1) chars.push(' ');
     }
-  } else {
+    return chars.join('');
+  }
+
+  function generateWords(count) {
+    const out = [];
     for (let i = 0; i < count; i++) {
-      words.push(randomPseudoWord(level.keys));
+      out.push(WORDS[Math.floor(Math.random() * WORDS.length)]);
+    }
+    return out.join(' ');
+  }
+
+  function generateText() {
+    if (level === 'words') {
+      return generateWords(duration >= 60 ? 80 : duration >= 30 ? 50 : 30);
+    }
+    const charCount = duration >= 60 ? 280 : duration >= 30 ? 160 : 90;
+    return generateLetters(charCount);
+  }
+
+  function renderText() {
+    const target = targetText;
+    const typedLen = typed.length;
+    let html = '';
+
+    for (let i = 0; i < target.length; i++) {
+      const ch = target[i];
+      const isSpace = ch === ' ';
+      let cls = 'char pending';
+
+      if (i < typedLen) {
+        if (typed[i] === ch) {
+          cls = 'char correct';
+        } else {
+          cls = 'char incorrect';
+        }
+      } else if (i === typedLen) {
+        cls = 'char current';
+      }
+
+      if (isSpace) {
+        html += `<span class="${cls} space-char">${i < typedLen && typed[i] !== ' ' ? typed[i] : ' '}</span>`;
+      } else {
+        const display = i < typedLen && typed[i] !== ch ? typed[i] : ch;
+        html += `<span class="${cls}">${escapeHtml(display)}</span>`;
+      }
+    }
+
+    if (typedLen > target.length) {
+      for (let i = target.length; i < typedLen; i++) {
+        html += `<span class="char extra">${escapeHtml(typed[i])}</span>`;
+      }
+    }
+
+    textDisplay.innerHTML = html;
+
+    const currentEl = textDisplay.querySelector('.char.current');
+    if (currentEl) {
+      currentEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     }
   }
-  return words;
-}
 
-const textDisplay = document.getElementById("textDisplay");
-const hiddenInput = document.getElementById("hiddenInput");
-const timeLeftEl = document.getElementById("timeLeft");
-const liveWpmEl = document.getElementById("liveWpm");
-const liveAccEl = document.getElementById("liveAcc");
-const restartBtn = document.getElementById("restartBtn");
-const playAgainBtn = document.getElementById("playAgainBtn");
-const resultsOverlay = document.getElementById("resultsOverlay");
-const durationBtns = document.querySelectorAll(".duration-btn");
-const levelBtns = document.querySelectorAll(".level-btn");
-
-let duration = 30;
-let timeLeft = duration;
-let timerId = null;
-let started = false;
-let finished = false;
-
-let words = [];
-let wordSpans = [];
-let typed = [];
-let wordIndex = 0;
-
-let correctChars = 0;
-let incorrectChars = 0;
-let extraChars = 0;
-let totalKeystrokes = 0;
-
-function buildWords() {
-  words = generateWords(200);
-  typed = words.map(() => "");
-  wordIndex = 0;
-  textDisplay.innerHTML = "";
-  wordSpans = [];
-
-  words.forEach((word, wi) => {
-    const wordEl = document.createElement("span");
-    wordEl.className = "word";
-    wordEl.dataset.index = wi;
-    [...word].forEach((ch) => {
-      const charEl = document.createElement("span");
-      charEl.className = "char";
-      charEl.textContent = ch;
-      wordEl.appendChild(charEl);
-    });
-    textDisplay.appendChild(wordEl);
-    textDisplay.appendChild(document.createTextNode(" "));
-    wordSpans.push(wordEl);
-  });
-
-  markCurrent();
-}
-
-function markCurrent() {
-  document.querySelectorAll(".char.current").forEach((el) => el.classList.remove("current"));
-  const currentWordEl = wordSpans[wordIndex];
-  if (!currentWordEl) return;
-  const pos = typed[wordIndex].length;
-  const chars = currentWordEl.querySelectorAll(".char");
-  if (chars[pos]) {
-    chars[pos].classList.add("current");
-  } else if (chars.length > 0) {
-    chars[chars.length - 1].classList.add("current");
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
   }
-  currentWordEl.scrollIntoView({ block: "nearest" });
-}
 
-function renderWord(wi) {
-  const wordEl = wordSpans[wi];
-  const word = words[wi];
-  const input = typed[wi];
-  const chars = Array.from(wordEl.querySelectorAll(".char"));
-
-  chars.forEach((charEl, i) => {
-    charEl.classList.remove("correct", "incorrect", "current", "extra");
-    if (i < input.length) {
-      charEl.classList.add(input[i] === word[i] ? "correct" : "incorrect");
+  function countStats() {
+    correctCount = 0;
+    incorrectCount = 0;
+    extraCount = 0;
+    const len = Math.min(typed.length, targetText.length);
+    for (let i = 0; i < len; i++) {
+      if (typed[i] === targetText[i]) correctCount++;
+      else incorrectCount++;
     }
-  });
-
-  const existingExtra = wordEl.querySelectorAll(".char.extra-added");
-  existingExtra.forEach((el) => el.remove());
-
-  if (input.length > word.length) {
-    for (let i = word.length; i < input.length; i++) {
-      const extraEl = document.createElement("span");
-      extraEl.className = "char extra extra-added";
-      extraEl.textContent = input[i];
-      wordEl.appendChild(extraEl);
+    if (typed.length > targetText.length) {
+      extraCount = typed.length - targetText.length;
     }
   }
-}
 
-function startTimer() {
-  if (started) return;
-  started = true;
-  timerId = setInterval(() => {
-    timeLeft--;
-    timeLeftEl.textContent = timeLeft;
+  function calcWpm(elapsedMs) {
+    const minutes = elapsedMs / 60000;
+    if (minutes <= 0) return 0;
+    return Math.round((correctCount / 5) / minutes);
+  }
+
+  function calcRawWpm(elapsedMs) {
+    const minutes = elapsedMs / 60000;
+    if (minutes <= 0) return 0;
+    return Math.round((typed.length / 5) / minutes);
+  }
+
+  function calcAccuracy() {
+    const total = correctCount + incorrectCount + extraCount;
+    if (total === 0) return 100;
+    return Math.round((correctCount / total) * 100);
+  }
+
+  function updateLiveStats() {
+    if (!started) {
+      liveWpmEl.textContent = '0';
+      liveAccEl.textContent = '100%';
+      return;
+    }
+    const elapsed = Date.now() - startTime;
+    countStats();
+    liveWpmEl.textContent = String(calcWpm(elapsed));
+    liveAccEl.textContent = calcAccuracy() + '%';
+  }
+
+  function tick() {
+    if (finished) return;
+    const elapsed = (Date.now() - startTime) / 1000;
+    timeLeft = Math.max(0, Math.ceil(duration - elapsed));
+    timeLeftEl.textContent = String(timeLeft);
     updateLiveStats();
+
     if (timeLeft <= 0) {
       finish();
     }
-  }, 1000);
-}
-
-function updateLiveStats() {
-  const elapsedMinutes = (duration - timeLeft) / 60;
-  const wpm = elapsedMinutes > 0 ? Math.round((correctChars / 5) / elapsedMinutes) : 0;
-  liveWpmEl.textContent = wpm > 0 ? wpm : 0;
-
-  const totalTyped = correctChars + incorrectChars;
-  const acc = totalTyped > 0 ? Math.round((correctChars / totalTyped) * 100) : 100;
-  liveAccEl.textContent = acc + "%";
-}
-
-function finish() {
-  finished = true;
-  clearInterval(timerId);
-  hiddenInput.blur();
-
-  const elapsedMinutes = duration / 60;
-  const rawWpm = Math.round((totalKeystrokes / 5) / elapsedMinutes);
-  const wpm = Math.round((correctChars / 5) / elapsedMinutes);
-  const totalTyped = correctChars + incorrectChars;
-  const acc = totalTyped > 0 ? Math.round((correctChars / totalTyped) * 100) : 100;
-
-  document.getElementById("resultWpm").textContent = wpm > 0 ? wpm : 0;
-  document.getElementById("resultAcc").textContent = acc + "%";
-  document.getElementById("resultRaw").textContent = rawWpm > 0 ? rawWpm : 0;
-  document.getElementById("resultChars").textContent = `${correctChars}/${incorrectChars}/${extraChars}`;
-
-  resultsOverlay.classList.add("visible");
-}
-
-function reset() {
-  clearInterval(timerId);
-  started = false;
-  finished = false;
-  timeLeft = duration;
-  timeLeftEl.textContent = timeLeft;
-  liveWpmEl.textContent = "0";
-  liveAccEl.textContent = "100%";
-  correctChars = 0;
-  incorrectChars = 0;
-  extraChars = 0;
-  totalKeystrokes = 0;
-  resultsOverlay.classList.remove("visible");
-  buildWords();
-  hiddenInput.value = "";
-  hiddenInput.focus();
-}
-
-hiddenInput.addEventListener("keydown", (e) => {
-  if (finished) return;
-
-  if (e.key === "Tab") {
-    e.preventDefault();
-    reset();
-    return;
   }
 
-  if (e.key === " ") {
-    e.preventDefault();
-    if (typed[wordIndex].length === 0) return;
-    if (!started) startTimer();
+  function start() {
+    if (started || finished) return;
+    started = true;
+    startTime = Date.now();
+    timeLeft = duration;
+    timerId = setInterval(tick, 200);
+  }
 
-    const word = words[wordIndex];
-    const input = typed[wordIndex];
-    for (let i = 0; i < Math.max(word.length, input.length); i++) {
-      if (i >= input.length) {
-        incorrectChars++;
-      } else if (i >= word.length) {
-        extraChars++;
-      } else if (input[i] === word[i]) {
-        correctChars++;
-      } else {
-        incorrectChars++;
+  function finish() {
+    if (finished) return;
+    finished = true;
+    if (timerId) {
+      clearInterval(timerId);
+      timerId = null;
+    }
+    timeLeftEl.textContent = '0';
+    countStats();
+    const elapsed = Math.min(Date.now() - startTime, duration * 1000);
+    const wpm = calcWpm(elapsed);
+    const raw = calcRawWpm(elapsed);
+    const acc = calcAccuracy();
+
+    resultWpm.textContent = String(wpm);
+    resultAcc.textContent = acc + '%';
+    resultRaw.textContent = String(raw);
+    resultChars.textContent = `${correctCount}/${incorrectCount}/${extraCount}`;
+
+    resultsOverlay.hidden = false;
+    requestAnimationFrame(() => {
+      resultsOverlay.classList.add('visible');
+    });
+  }
+
+  function reset() {
+    if (timerId) {
+      clearInterval(timerId);
+      timerId = null;
+    }
+    started = false;
+    finished = false;
+    typed = '';
+    startTime = 0;
+    timeLeft = duration;
+    correctCount = 0;
+    incorrectCount = 0;
+    extraCount = 0;
+
+    targetText = generateText();
+    timeLeftEl.textContent = String(duration);
+    liveWpmEl.textContent = '0';
+    liveAccEl.textContent = '100%';
+
+    resultsOverlay.classList.remove('visible');
+    setTimeout(() => {
+      resultsOverlay.hidden = true;
+    }, 300);
+
+    renderText();
+    hiddenInput.value = '';
+    textDisplay.classList.remove('focused');
+  }
+
+  // ===== Input handling =====
+  function handleInput() {
+    if (finished) return;
+    const value = hiddenInput.value;
+    if (!started && value.length > 0) start();
+
+    if (value.length > targetText.length + 20) {
+      hiddenInput.value = typed;
+      return;
+    }
+
+    typed = value;
+    renderText();
+    updateLiveStats();
+
+    if (typed.length >= targetText.length && typed === targetText) {
+      finish();
+    }
+  }
+
+  function focusInput() {
+    hiddenInput.focus();
+    textDisplay.classList.add('focused');
+  }
+
+  // ===== Events =====
+  textDisplay.addEventListener('click', focusInput);
+  textDisplay.addEventListener('focus', focusInput);
+
+  hiddenInput.addEventListener('input', handleInput);
+
+  hiddenInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      reset();
+      focusInput();
+    }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Tab' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      e.preventDefault();
+      reset();
+      focusInput();
+    }
+    if (!finished && document.activeElement !== hiddenInput) {
+      if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        focusInput();
       }
     }
-    wordSpans[wordIndex].classList.add("done");
-    wordIndex++;
-    if (wordIndex >= words.length) {
-      words.push(...generateWords(100));
-      typed.push(...words.slice(typed.length).map(() => ""));
-      const start = wordSpans.length;
-      words.slice(start).forEach((word, i) => {
-        const wi = start + i;
-        const wordEl = document.createElement("span");
-        wordEl.className = "word";
-        wordEl.dataset.index = wi;
-        [...word].forEach((ch) => {
-          const charEl = document.createElement("span");
-          charEl.className = "char";
-          charEl.textContent = ch;
-          wordEl.appendChild(charEl);
-        });
-        textDisplay.appendChild(wordEl);
-        textDisplay.appendChild(document.createTextNode(" "));
-        wordSpans.push(wordEl);
-      });
-    }
-    markCurrent();
-    updateLiveStats();
-    return;
-  }
-
-  if (e.key === "Backspace") {
-    e.preventDefault();
-    if (typed[wordIndex].length > 0) {
-      typed[wordIndex] = typed[wordIndex].slice(0, -1);
-      renderWord(wordIndex);
-      markCurrent();
-    } else if (wordIndex > 0) {
-      wordIndex--;
-      wordSpans[wordIndex].classList.remove("done");
-      markCurrent();
-    }
-    return;
-  }
-
-  if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
-    e.preventDefault();
-    if (!started) startTimer();
-    typed[wordIndex] += e.key;
-    totalKeystrokes++;
-    renderWord(wordIndex);
-    markCurrent();
-    updateLiveStats();
-  }
-});
-
-textDisplay.addEventListener("click", () => hiddenInput.focus());
-restartBtn.addEventListener("click", reset);
-playAgainBtn.addEventListener("click", reset);
-
-durationBtns.forEach((btn) => {
-  btn.addEventListener("click", () => {
-    durationBtns.forEach((b) => b.classList.remove("active"));
-    btn.classList.add("active");
-    duration = parseInt(btn.dataset.time, 10);
-    reset();
   });
-});
 
-levelBtns.forEach((btn) => {
-  btn.addEventListener("click", () => {
-    levelBtns.forEach((b) => b.classList.remove("active"));
-    btn.classList.add("active");
-    currentLevel = btn.dataset.level;
+  restartBtn.addEventListener('click', () => {
     reset();
+    focusInput();
   });
-});
 
-document.addEventListener("keydown", (e) => {
-  if (e.key === "Tab") {
-    e.preventDefault();
+  playAgainBtn.addEventListener('click', () => {
     reset();
-  } else if (document.activeElement !== hiddenInput && !resultsOverlay.classList.contains("visible")) {
-    hiddenInput.focus();
-  }
-});
+    focusInput();
+  });
 
-buildWords();
-timeLeftEl.textContent = timeLeft;
-hiddenInput.focus();
+  levelBtns.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      levelBtns.forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+      level = btn.dataset.level;
+      reset();
+    });
+  });
+
+  durationBtns.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      durationBtns.forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+      duration = parseInt(btn.dataset.time, 10);
+      reset();
+    });
+  });
+
+  hiddenInput.addEventListener('blur', () => {
+    textDisplay.classList.remove('focused');
+  });
+
+  // ===== Init =====
+  reset();
+})();

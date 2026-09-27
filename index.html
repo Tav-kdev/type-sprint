@@ -3,27 +3,53 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Type Sprint</title>
+<title>Type Sprint — Space Edition</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <div class="stars" id="stars"></div>
+  <div class="stars stars-2" id="stars2"></div>
+  <div class="nebula"></div>
+
   <div class="app">
     <header>
-      <h1>Type Sprint</h1>
-      <div class="settings">
-        <div class="level-group" role="group" aria-label="Difficulty level">
-          <button class="level-btn active" data-level="homeRow">Home Row</button>
-          <button class="level-btn" data-level="topRow">Top Row</button>
-          <button class="level-btn" data-level="bottomRow">Bottom Row</button>
-          <button class="level-btn" data-level="allLetters">All Letters</button>
-          <button class="level-btn" data-level="numbers">Numbers</button>
-          <button class="level-btn" data-level="words">Words</button>
+      <div class="logo-row">
+        <div class="logo-icon" aria-hidden="true">
+          <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="24" cy="24" r="20" stroke="currentColor" stroke-width="1.5" opacity="0.4"/>
+            <circle cx="24" cy="24" r="12" stroke="currentColor" stroke-width="1.5" opacity="0.6"/>
+            <circle cx="24" cy="24" r="4" fill="currentColor"/>
+            <path d="M24 4v4M24 40v4M4 24h4M40 24h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            <path d="M10.5 10.5l2.8 2.8M34.7 34.7l2.8 2.8M10.5 37.5l2.8-2.8M34.7 13.3l2.8-2.8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
         </div>
-        <div class="duration-group" role="group" aria-label="Test duration">
-          <button class="duration-btn" data-time="15">15s</button>
-          <button class="duration-btn active" data-time="30">30s</button>
-          <button class="duration-btn" data-time="60">60s</button>
-          <button class="duration-btn" data-time="120">120s</button>
+        <h1>Type Sprint</h1>
+        <span class="subtitle">SPACE EDITION</span>
+      </div>
+
+      <div class="settings">
+        <div class="setting-block">
+          <span class="setting-label">Difficulty</span>
+          <div class="level-group" role="group" aria-label="Difficulty level">
+            <button class="level-btn active" data-level="homeRow">Home Row</button>
+            <button class="level-btn" data-level="topRow">Top Row</button>
+            <button class="level-btn" data-level="bottomRow">Bottom Row</button>
+            <button class="level-btn" data-level="allLetters">All Letters</button>
+            <button class="level-btn" data-level="numbers">Numbers</button>
+            <button class="level-btn" data-level="words">Words</button>
+          </div>
+        </div>
+        <div class="setting-block">
+          <span class="setting-label">Duration</span>
+          <div class="duration-group" role="group" aria-label="Test duration">
+            <button class="duration-btn" data-time="15">15s</button>
+            <button class="duration-btn active" data-time="30">30s</button>
+            <button class="duration-btn" data-time="60">60s</button>
+            <button class="duration-btn" data-time="120">120s</button>
+          </div>
         </div>
       </div>
     </header>
@@ -34,29 +60,48 @@
           <span class="stat-label">Time</span>
           <span class="stat-value" id="timeLeft">30</span>
         </div>
+        <div class="stat-divider"></div>
         <div class="stat">
           <span class="stat-label">WPM</span>
           <span class="stat-value" id="liveWpm">0</span>
         </div>
+        <div class="stat-divider"></div>
         <div class="stat">
           <span class="stat-label">Accuracy</span>
           <span class="stat-value" id="liveAcc">100%</span>
         </div>
       </div>
 
-      <div class="text-display" id="textDisplay" tabindex="0"></div>
+      <div class="text-display-wrap">
+        <div class="text-display" id="textDisplay" tabindex="0"></div>
+      </div>
       <input type="text" id="hiddenInput" class="hidden-input" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
 
       <div class="controls">
-        <button id="restartBtn">Restart (Tab)</button>
+        <button id="restartBtn" class="btn-secondary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+          Restart <kbd>Tab</kbd>
+        </button>
+        <p class="hint">Click the text area or start typing to begin</p>
       </div>
     </main>
 
-    <div class="overlay" id="resultsOverlay">
+    <div class="overlay" id="resultsOverlay" hidden>
       <div class="results-card">
-        <h2>Results</h2>
+        <div class="results-header">
+          <div class="results-icon" aria-hidden="true">
+            <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="32" cy="32" r="28" stroke="currentColor" stroke-width="1.5" opacity="0.3"/>
+              <circle cx="32" cy="32" r="18" stroke="currentColor" stroke-width="1.5" opacity="0.5"/>
+              <path d="M32 14v8M32 42v8M14 32h8M42 32h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              <circle cx="32" cy="32" r="6" fill="currentColor"/>
+            </svg>
+          </div>
+          <h2>Mission Complete</h2>
+          <p class="results-sub">Your typing performance report</p>
+        </div>
         <div class="results-grid">
-          <div class="result-item">
+          <div class="result-item highlight">
             <span class="result-value" id="resultWpm">0</span>
             <span class="result-label">WPM</span>
           </div>
@@ -70,10 +115,10 @@
           </div>
           <div class="result-item">
             <span class="result-value" id="resultChars">0/0/0</span>
-            <span class="result-label">Correct/Incorrect/Extra</span>
+            <span class="result-label">Correct / Incorrect / Extra</span>
           </div>
         </div>
-        <button id="playAgainBtn">Play Again</button>
+        <button id="playAgainBtn" class="btn-primary">Launch Again</button>
       </div>
     </div>
   </div>
