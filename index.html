@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Type Sprint</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>Type Sprint</h1>
+      <div class="settings">
+        <div class="duration-group" role="group" aria-label="Test duration">
+          <button class="duration-btn" data-time="15">15s</button>
+          <button class="duration-btn active" data-time="30">30s</button>
+          <button class="duration-btn" data-time="60">60s</button>
+          <button class="duration-btn" data-time="120">120s</button>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <div class="stats-bar">
+        <div class="stat">
+          <span class="stat-label">Time</span>
+          <span class="stat-value" id="timeLeft">30</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">WPM</span>
+          <span class="stat-value" id="liveWpm">0</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Accuracy</span>
+          <span class="stat-value" id="liveAcc">100%</span>
+        </div>
+      </div>
+
+      <div class="text-display" id="textDisplay" tabindex="0"></div>
+      <input type="text" id="hiddenInput" class="hidden-input" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+
+      <div class="controls">
+        <button id="restartBtn">Restart (Tab)</button>
+      </div>
+    </main>
+
+    <div class="overlay" id="resultsOverlay">
+      <div class="results-card">
+        <h2>Results</h2>
+        <div class="results-grid">
+          <div class="result-item">
+            <span class="result-value" id="resultWpm">0</span>
+            <span class="result-label">WPM</span>
+          </div>
+          <div class="result-item">
+            <span class="result-value" id="resultAcc">0%</span>
+            <span class="result-label">Accuracy</span>
+          </div>
+          <div class="result-item">
+            <span class="result-value" id="resultRaw">0</span>
+            <span class="result-label">Raw WPM</span>
+          </div>
+          <div class="result-item">
+            <span class="result-value" id="resultChars">0/0/0</span>
+            <span class="result-label">Correct/Incorrect/Extra</span>
+          </div>
+        </div>
+        <button id="playAgainBtn">Play Again</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
