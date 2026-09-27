@@ -1,16 +1,60 @@
 (() => {
   'use strict';
 
-  // ===== Content pools =====
-  const LETTERS = {
-    homeRow: 'asdfghjkl',
-    topRow: 'qwertyuiop',
-    bottomRow: 'zxcvbnm',
+  // ===== Lesson data (16 levels across 3 tiers) =====
+  const LEVELS = [
+    // Tier 1: Home Row Foundation
+    { id: 1, tier: 1, title: 'F J Only', desc: 'Index fingers, anchor keys — find them by touch.', type: 'drill', pool: 'fj' },
+    { id: 2, tier: 1, title: 'D K Added', desc: 'f j d k', type: 'drill', pool: 'fjdk' },
+    { id: 3, tier: 1, title: 'S L Added', desc: 'f j d k s l', type: 'drill', pool: 'fjdksl' },
+    { id: 4, tier: 1, title: 'Full Home Row', desc: 'a s d f j k l ;', type: 'drill', pool: 'asdfjkl;' },
+    { id: 5, tier: 1, title: 'Home Row Words', desc: 'Home row words only', type: 'words', words: [
+      'dad', 'add', 'all', 'ask', 'sad', 'lad', 'fall', 'falls', 'flask', 'salad', 'alas', 'salsa', 'lass', 'a lass'
+    ] },
+    { id: 6, tier: 1, title: 'Home Row Sentences', desc: 'Home row sentences', type: 'sentences', sentences: [
+      'a sad lad; a glass falls',
+      'a lad asks a sad dad',
+      'salad falls; add a flask'
+    ] },
+
+    // Tier 2: Top Row
+    { id: 7, tier: 2, title: 'Left Hand Top Row', desc: 'q w e r t', type: 'drill', pool: 'qwert' },
+    { id: 8, tier: 2, title: 'Right Hand Top Row', desc: 'y u i o p', type: 'drill', pool: 'yuiop' },
+    { id: 9, tier: 2, title: 'Top + Home Combined', desc: 'Combined top + home row drills', type: 'drill', pool: 'asdfjkl;qwertyuiop' },
+    { id: 10, tier: 2, title: 'Top + Home Words', desc: 'Real words mixing top + home', type: 'words', words: [
+      'water', 'quiet', 'perfect', 'treaty', 'quote', 'tower', 'write', 'wear', 'request',
+      'operate', 'quarter', 'waiter', 'worry', 'tray'
+    ] },
+    { id: 11, tier: 2, title: 'Top + Home Sentences', desc: 'Sentences mixing top + home row', type: 'sentences', sentences: [
+      'water quietly powers the tower',
+      'we request a treaty to operate the quarter',
+      'the quiet waiter wrote a proper request'
+    ] },
+
+    // Tier 3: Bottom Row
+    { id: 12, tier: 3, title: 'Left Hand Bottom Row', desc: 'z x c v b', type: 'drill', pool: 'zxcvb' },
+    { id: 13, tier: 3, title: 'Right Hand Bottom Row', desc: 'n m , . /', type: 'drill', pool: 'nm,./' },
+    { id: 14, tier: 3, title: 'Bottom + Home Combined', desc: 'Combined bottom + home row drills', type: 'drill', pool: 'asdfjkl;zxcvbnm,./' },
+    { id: 15, tier: 3, title: 'All Three Rows Words', desc: 'Words using all three rows', type: 'words', words: [
+      'zoo', 'mix', 'brave', 'nimble', 'exam', 'crazy', 'dozen', 'voice', 'mercy',
+      'zombie', 'bronze', 'vintage', 'maze', 'mixer', 'vanish'
+    ] },
+    { id: 16, tier: 3, title: 'Full Sentences', desc: 'Full sentences, all letters, lowercase only', type: 'sentences', sentences: [
+      'the quick brown fox jumps over the lazy dog',
+      'she sells seashells down by the sunny shore',
+      'practice makes progress, not just perfect typing',
+      'a journey of a thousand miles begins with a single step',
+      'pack my box with five dozen liquor jugs'
+    ] }
+  ];
+
+  // ===== General typing pools =====
+  const GENERAL_LETTERS = {
     allLetters: 'abcdefghijklmnopqrstuvwxyz',
     numbers: '0123456789'
   };
 
-  const WORDS = [
+  const GENERAL_WORDS = [
     'space', 'orbit', 'galaxy', 'nebula', 'comet', 'planet', 'stellar', 'cosmic',
     'rocket', 'lunar', 'solar', 'asteroid', 'meteor', 'void', 'pulse', 'signal',
     'quantum', 'photon', 'plasma', 'thrust', 'vector', 'module', 'station', 'probe',
@@ -23,7 +67,9 @@
   ];
 
   // ===== State =====
-  let level = 'homeRow';
+  let mode = 'lessons'; // 'lessons' | 'general'
+  let currentLevelId = 1;
+  let generalType = 'words';
   let duration = 30;
   let targetText = '';
   let typed = '';
@@ -50,37 +96,77 @@
   const resultRaw = document.getElementById('resultRaw');
   const resultChars = document.getElementById('resultChars');
   const levelBtns = document.querySelectorAll('.level-btn');
+  const generalBtns = document.querySelectorAll('.general-btn');
   const durationBtns = document.querySelectorAll('.duration-btn');
+  const modeTabs = document.querySelectorAll('.mode-tab');
+  const lessonsPanel = document.getElementById('lessonsPanel');
+  const generalPanel = document.getElementById('generalPanel');
+  const lessonInfo = document.getElementById('lessonInfo');
+  const lessonTitle = document.getElementById('lessonTitle');
+  const lessonDesc = document.getElementById('lessonDesc');
 
   // ===== Helpers =====
   function randChar(pool) {
     return pool[Math.floor(Math.random() * pool.length)];
   }
 
-  function generateLetters(count) {
-    const pool = LETTERS[level] || LETTERS.homeRow;
-    const chars = [];
-    for (let i = 0; i < count; i++) {
-      chars.push(randChar(pool));
-      if ((i + 1) % 5 === 0 && i < count - 1) chars.push(' ');
-    }
-    return chars.join('');
+  function randomFrom(arr) {
+    return arr[Math.floor(Math.random() * arr.length)];
   }
 
-  function generateWords(count) {
-    const out = [];
-    for (let i = 0; i < count; i++) {
-      out.push(WORDS[Math.floor(Math.random() * WORDS.length)]);
+  function randomPseudoWord(pool) {
+    const length = 2 + Math.floor(Math.random() * 4);
+    let word = '';
+    for (let i = 0; i < length; i++) word += randChar(pool);
+    return word;
+  }
+
+  function currentLevel() {
+    return LEVELS.find((l) => l.id === currentLevelId) || LEVELS[0];
+  }
+
+  function textLengthTarget() {
+    return duration >= 60 ? 280 : duration >= 30 ? 160 : 90;
+  }
+
+  function buildFromItems(itemFn, targetLen) {
+    let text = '';
+    while (text.length < targetLen) {
+      text += (text ? ' ' : '') + itemFn();
     }
-    return out.join(' ');
+    return text;
   }
 
   function generateText() {
-    if (level === 'words') {
-      return generateWords(duration >= 60 ? 80 : duration >= 30 ? 50 : 30);
+    const targetLen = textLengthTarget();
+
+    if (mode === 'general') {
+      if (generalType === 'words') {
+        return buildFromItems(() => randomFrom(GENERAL_WORDS), targetLen);
+      }
+      const pool = GENERAL_LETTERS[generalType] || GENERAL_LETTERS.allLetters;
+      return buildFromItems(() => randomPseudoWord(pool), targetLen);
     }
-    const charCount = duration >= 60 ? 280 : duration >= 30 ? 160 : 90;
-    return generateLetters(charCount);
+
+    const level = currentLevel();
+    if (level.type === 'words') {
+      return buildFromItems(() => randomFrom(level.words), targetLen);
+    }
+    if (level.type === 'sentences') {
+      return buildFromItems(() => randomFrom(level.sentences), targetLen);
+    }
+    return buildFromItems(() => randomPseudoWord(level.pool), targetLen);
+  }
+
+  function updateLessonInfo() {
+    if (mode !== 'lessons') {
+      lessonInfo.hidden = true;
+      return;
+    }
+    lessonInfo.hidden = false;
+    const level = currentLevel();
+    lessonTitle.textContent = `Level ${level.id} · ${level.title}`;
+    lessonDesc.textContent = level.desc;
   }
 
   function renderText() {
@@ -94,11 +180,7 @@
       let cls = 'char pending';
 
       if (i < typedLen) {
-        if (typed[i] === ch) {
-          cls = 'char correct';
-        } else {
-          cls = 'char incorrect';
-        }
+        cls = typed[i] === ch ? 'char correct' : 'char incorrect';
       } else if (i === typedLen) {
         cls = 'char current';
       }
@@ -241,6 +323,8 @@
     liveWpmEl.textContent = '0';
     liveAccEl.textContent = '100%';
 
+    updateLessonInfo();
+
     resultsOverlay.classList.remove('visible');
     setTimeout(() => {
       resultsOverlay.hidden = true;
@@ -317,7 +401,31 @@
     btn.addEventListener('click', () => {
       levelBtns.forEach((b) => b.classList.remove('active'));
       btn.classList.add('active');
-      level = btn.dataset.level;
+      currentLevelId = parseInt(btn.dataset.level, 10);
+      reset();
+    });
+  });
+
+  generalBtns.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      generalBtns.forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+      generalType = btn.dataset.general;
+      reset();
+    });
+  });
+
+  modeTabs.forEach((tab) => {
+    tab.addEventListener('click', () => {
+      modeTabs.forEach((t) => {
+        t.classList.remove('active');
+        t.setAttribute('aria-selected', 'false');
+      });
+      tab.classList.add('active');
+      tab.setAttribute('aria-selected', 'true');
+      mode = tab.dataset.mode;
+      lessonsPanel.hidden = mode !== 'lessons';
+      generalPanel.hidden = mode !== 'general';
       reset();
     });
   });
@@ -334,6 +442,59 @@
   hiddenInput.addEventListener('blur', () => {
     textDisplay.classList.remove('focused');
   });
+
+  // ===== Interactive Rocket =====
+  const rocket = document.getElementById('rocket');
+  if (rocket) {
+    let boosting = false;
+    rocket.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (boosting) return;
+      boosting = true;
+      rocket.classList.add('boost');
+      for (let i = 0; i < 8; i++) {
+        const spark = document.createElement('span');
+        spark.className = 'spark';
+        const rect = rocket.getBoundingClientRect();
+        spark.style.cssText = `
+          position:fixed;left:${rect.left + rect.width / 2}px;top:${rect.bottom}px;
+          width:4px;height:4px;border-radius:50%;background:#5eead4;
+          pointer-events:none;z-index:5;
+          box-shadow:0 0 6px #5eead4;
+          animation:sparkFly 0.7s ease-out forwards;
+          --dx:${(Math.random() - 0.5) * 80}px;
+          --dy:${40 + Math.random() * 60}px;
+        `;
+        document.body.appendChild(spark);
+        setTimeout(() => spark.remove(), 700);
+      }
+      setTimeout(() => {
+        rocket.classList.remove('boost');
+        rocket.style.opacity = '0';
+        setTimeout(() => {
+          rocket.style.transition = 'none';
+          rocket.style.transform = '';
+          rocket.style.opacity = '1';
+          requestAnimationFrame(() => {
+            rocket.style.transition = '';
+            boosting = false;
+          });
+        }, 50);
+      }, 1200);
+    });
+  }
+
+  if (!document.getElementById('spark-style')) {
+    const style = document.createElement('style');
+    style.id = 'spark-style';
+    style.textContent = `
+      @keyframes sparkFly {
+        0% { transform: translate(0,0) scale(1); opacity:1; }
+        100% { transform: translate(var(--dx), var(--dy)) scale(0); opacity:0; }
+      }
+    `;
+    document.head.appendChild(style);
+  }
 
   // ===== Init =====
   reset();

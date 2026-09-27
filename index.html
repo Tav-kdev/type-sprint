@@ -10,9 +10,78 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <!-- Background layers -->
   <div class="stars" id="stars"></div>
   <div class="stars stars-2" id="stars2"></div>
   <div class="nebula"></div>
+
+  <!-- Animated space objects -->
+  <div class="space-objects" aria-hidden="true">
+    <!-- Interactive rocket -->
+    <div class="rocket" id="rocket" title="Click me!">
+      <svg class="rocket-svg" viewBox="0 0 64 96" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- Body -->
+        <path d="M32 4 L44 36 L44 68 L32 80 L20 68 L20 36 Z" fill="url(#rocketBody)" stroke="#5eead4" stroke-width="1.2"/>
+        <!-- Nose cone -->
+        <path d="M32 4 L38 20 L26 20 Z" fill="#a78bfa" stroke="#c4b5fd" stroke-width="0.8"/>
+        <!-- Window -->
+        <circle cx="32" cy="34" r="6" fill="#0c1220" stroke="#5eead4" stroke-width="1.5"/>
+        <circle cx="32" cy="34" r="3.5" fill="#5eead4" opacity="0.35"/>
+        <!-- Fins -->
+        <path d="M20 58 L8 78 L20 68 Z" fill="#60a5fa" stroke="#93c5fd" stroke-width="0.8"/>
+        <path d="M44 58 L56 78 L44 68 Z" fill="#60a5fa" stroke="#93c5fd" stroke-width="0.8"/>
+        <!-- Engine glow base -->
+        <ellipse cx="32" cy="80" rx="8" ry="3" fill="#5eead4" opacity="0.5"/>
+        <defs>
+          <linearGradient id="rocketBody" x1="20" y1="4" x2="44" y2="80" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#e8f0fe"/>
+            <stop offset="0.4" stop-color="#94a3b8"/>
+            <stop offset="1" stop-color="#64748b"/>
+          </linearGradient>
+        </defs>
+      </svg>
+      <!-- Exhaust flames -->
+      <div class="exhaust">
+        <span class="flame flame-1"></span>
+        <span class="flame flame-2"></span>
+        <span class="flame flame-3"></span>
+      </div>
+      <!-- Particle trail -->
+      <div class="trail" id="rocketTrail"></div>
+    </div>
+
+    <!-- Floating asteroids -->
+    <div class="asteroid a1">
+      <svg viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="14" fill="#4a5568"/><circle cx="14" cy="16" r="3" fill="#2d3748"/><circle cx="24" cy="22" r="4" fill="#2d3748"/><circle cx="18" cy="26" r="2" fill="#1a202c"/></svg>
+    </div>
+    <div class="asteroid a2">
+      <svg viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="11" fill="#5a6a7a"/><circle cx="12" cy="13" r="2.5" fill="#3d4a5a"/><circle cx="20" cy="18" r="3" fill="#3d4a5a"/></svg>
+    </div>
+    <div class="asteroid a3">
+      <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" fill="#3d4f5f"/><circle cx="9" cy="10" r="2" fill="#2a3540"/><circle cx="15" cy="14" r="2.5" fill="#2a3540"/></svg>
+    </div>
+
+    <!-- Shooting stars -->
+    <div class="shooting-star ss1"></div>
+    <div class="shooting-star ss2"></div>
+    <div class="shooting-star ss3"></div>
+
+    <!-- Orbiting planet -->
+    <div class="planet" id="planet">
+      <div class="planet-body"></div>
+      <div class="planet-ring"></div>
+    </div>
+
+    <!-- Satellite -->
+    <div class="satellite" id="satellite">
+      <svg viewBox="0 0 48 24" fill="none">
+        <rect x="18" y="8" width="12" height="8" rx="1" fill="#94a3b8" stroke="#5eead4" stroke-width="0.8"/>
+        <rect x="2" y="10" width="14" height="4" rx="0.5" fill="#60a5fa" opacity="0.8"/>
+        <rect x="32" y="10" width="14" height="4" rx="0.5" fill="#60a5fa" opacity="0.8"/>
+        <circle cx="24" cy="12" r="2" fill="#5eead4"/>
+      </svg>
+    </div>
+  </div>
 
   <div class="app">
     <header>
@@ -30,18 +99,55 @@
         <span class="subtitle">SPACE EDITION</span>
       </div>
 
+      <div class="mode-tabs" role="tablist" aria-label="Practice mode">
+        <button class="mode-tab active" data-mode="lessons" role="tab" aria-selected="true">Lessons</button>
+        <button class="mode-tab" data-mode="general" role="tab" aria-selected="false">General Typing</button>
+      </div>
+
       <div class="settings">
-        <div class="setting-block">
-          <span class="setting-label">Difficulty</span>
-          <div class="level-group" role="group" aria-label="Difficulty level">
-            <button class="level-btn active" data-level="homeRow">Home Row</button>
-            <button class="level-btn" data-level="topRow">Top Row</button>
-            <button class="level-btn" data-level="bottomRow">Bottom Row</button>
-            <button class="level-btn" data-level="allLetters">All Letters</button>
-            <button class="level-btn" data-level="numbers">Numbers</button>
-            <button class="level-btn" data-level="words">Words</button>
+        <div class="setting-block lessons-panel" id="lessonsPanel">
+          <div class="tier-group">
+            <span class="tier-label">Tier 1 &middot; Home Row Foundation</span>
+            <div class="level-group" role="group" aria-label="Tier 1 levels">
+              <button class="level-btn active" data-level="1">1</button>
+              <button class="level-btn" data-level="2">2</button>
+              <button class="level-btn" data-level="3">3</button>
+              <button class="level-btn" data-level="4">4</button>
+              <button class="level-btn" data-level="5">5</button>
+              <button class="level-btn" data-level="6">6</button>
+            </div>
+          </div>
+          <div class="tier-group">
+            <span class="tier-label">Tier 2 &middot; Top Row</span>
+            <div class="level-group" role="group" aria-label="Tier 2 levels">
+              <button class="level-btn" data-level="7">7</button>
+              <button class="level-btn" data-level="8">8</button>
+              <button class="level-btn" data-level="9">9</button>
+              <button class="level-btn" data-level="10">10</button>
+              <button class="level-btn" data-level="11">11</button>
+            </div>
+          </div>
+          <div class="tier-group">
+            <span class="tier-label">Tier 3 &middot; Bottom Row</span>
+            <div class="level-group" role="group" aria-label="Tier 3 levels">
+              <button class="level-btn" data-level="12">12</button>
+              <button class="level-btn" data-level="13">13</button>
+              <button class="level-btn" data-level="14">14</button>
+              <button class="level-btn" data-level="15">15</button>
+              <button class="level-btn" data-level="16">16</button>
+            </div>
           </div>
         </div>
+
+        <div class="setting-block general-panel" id="generalPanel" hidden>
+          <span class="setting-label">Practice Set</span>
+          <div class="level-group" role="group" aria-label="General typing set">
+            <button class="general-btn active" data-general="words">Words</button>
+            <button class="general-btn" data-general="allLetters">All Letters</button>
+            <button class="general-btn" data-general="numbers">Numbers</button>
+          </div>
+        </div>
+
         <div class="setting-block">
           <span class="setting-label">Duration</span>
           <div class="duration-group" role="group" aria-label="Test duration">
@@ -51,6 +157,11 @@
             <button class="duration-btn" data-time="120">120s</button>
           </div>
         </div>
+      </div>
+
+      <div class="lesson-info" id="lessonInfo">
+        <span class="lesson-title" id="lessonTitle">Level 1 &middot; F J Only</span>
+        <span class="lesson-desc" id="lessonDesc">Index fingers, anchor keys — find them by touch.</span>
       </div>
     </header>
 
@@ -82,7 +193,7 @@
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
           Restart <kbd>Tab</kbd>
         </button>
-        <p class="hint">Click the text area or start typing to begin</p>
+        <p class="hint">Click the text area or start typing to begin · Click the rocket for a boost!</p>
       </div>
     </main>
 
